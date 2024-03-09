@@ -1,0 +1,60 @@
+apiVersion: core.oam.dev/v1beta1
+kind: Application
+metadata:
+  name: kvcounter-distributed
+  annotations:
+    version: v0.0.1
+    description: "A simple kvcounter example"
+spec:
+  components:
+    - name: kvcounter
+      type: actor
+      properties:
+        image: registry.cosmonic.sh/ff7b03ec-eec2-4a05-8562-c47fe41a0dfa/kvcounter:0.1.1
+      traits:
+        - type: spreadscaler
+          properties:
+            replicas: 3
+            spread:
+              - name: local
+                requirements:
+                  hostcore.arch: "aarch64"
+                  hostcore.os: "macos"
+        - type: linkdef
+          properties:
+            target: httpserver
+            values:
+              address: "0.0.0.0:9999"
+        - type: linkdef
+          properties:
+            target: redis
+            values:
+              URL: "redis://127.0.0.1:6379"
+
+    - name: httpserver
+      type: capability
+      properties:
+        image: wasmcloud.azurecr.io/httpserver:0.19.1
+        contract: wasmcloud:httpserver
+      traits:
+        - type: daemonscaler
+          properties:
+            replicas: 1
+            spread:
+              - name: onk8s
+                requirements:
+                  kubernetes: "true"
+    - name: redis
+      type: capability
+      properties:
+        image: wasmcloud.azurecr.io/kvredis:0.22.0
+        contract: wasmcloud:keyvalue
+      traits:
+        - type: spreadscaler
+          properties:
+            replicas: 1
+            spread:
+              - name: local
+                requirements:
+                  hostcore.arch: "aarch64"
+                  hostcore.os: "macos"
