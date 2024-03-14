@@ -3,7 +3,7 @@ kind: Application
 metadata:
   name: kvcounter-distributed
   annotations:
-    version: v0.0.1
+    version: v0.0.2
     description: "A simple kvcounter example"
 spec:
   components:
@@ -12,14 +12,13 @@ spec:
       properties:
         image: registry.cosmonic.sh/ff7b03ec-eec2-4a05-8562-c47fe41a0dfa/kvcounter:0.1.1
       traits:
-        - type: spreadscaler
+        - type: daemonscaler
           properties:
             replicas: 3
             spread:
-              - name: local
+              - name: onk8s
                 requirements:
-                  hostcore.arch: "aarch64"
-                  hostcore.os: "macos"
+                  kubernetes: "true"
         - type: linkdef
           properties:
             target: httpserver
